@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NY Knicks Game Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --knicks-orange: #F58426;
+            --knicks-blue: #006BB6;
+            --knicks-dark: #1B1B1B;
+            --bg-dark: #0D0D0D;
+            --bg-card: #1A1A1A;
+            --text-primary: #FFFFFF;
+            --text-secondary: #A0A0A0;
+            --win-green: #4CAF50;
+            --loss-red: #E53935;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, var(--knicks-blue) 0%, var(--knicks-orange) 100%);
+            padding: 40px 20px 60px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.3;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 72px;
+            letter-spacing: 4px;
+            text-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+        }
+
+        .hero-subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: -30px auto 40px;
+            padding: 0 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--loss-red);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        .live-badge.off-air {
+            background: var(--text-secondary);
+            animation: none;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+
+        .off-air .live-dot {
+            animation: none;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .game-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .game-status {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .teams {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            gap: 20px;
+        }
+
+        .team {
+            text-align: center;
+            flex: 1;
+        }
+
+        .team-logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .team-logo svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .team-name {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 24px;
+            letter-spacing: 2px;
+        }
+
+        .team-name.knicks { color: var(--knicks-orange); }
+        .team-name.opponent { color: var(--text-primary); }
+
+        .score-display {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 72px;
+            line-height: 1;
+            letter-spacing: 2px;
+        }
+
+        .score-display.knicks { color: var(--knicks-orange); }
+        .score-display.opponent { color: var(--text-primary); }
+
+        .vs {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 28px;
+            color: var(--text-secondary);
+        }
+
+        .game-details {
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .detail {
+            text-align: center;
+        }
+
+        .detail-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .win-probability {
+            background: linear-gradient(135deg, var(--knicks-blue), var(--knicks-orange));
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .prob-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .prob-value {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 64px;
+            letter-spacing: 2px;
+        }
+
+        .prob-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .prob-fill {
+            height: 100%;
+            background: white;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        .section-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 28px;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .recent-games {
+            display: grid;
+            gap: 15px;
+        }
+
+        .recent-game {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .recent-game.win {
+            border-left: 4px solid var(--win-green);
+        }
+
+        .recent-game.loss {
+            border-left: 4px solid var(--loss-red);
+        }
+
+        .recent-opponent {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .recent-result {
+            text-align: right;
+        }
+
+        .recent-score {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 3px;
+        }
+
+        .recent-score.win { color: var(--win-green); }
+        .recent-score.loss { color: var(--loss-red); }
+
+        .recent-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .standings-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .standings-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .stat-box {
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 36px;
+            color: var(--knicks-orange);
+            letter-spacing: 1px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--knicks-orange);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .no-game {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .no-game-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .no-game-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .no-game-sub {
+            color: var(--text-secondary);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .footer span {
+            color: var(--knicks-orange);
+        }
+
+        @keyframes celebrate {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .celebrate {
+            animation: celebrate 0.5s ease;
+        }
+
+        @media (max-width: 600px) {
+            .logo { font-size: 48px; }
+            .score-display { font-size: 48px; }
+            .teams { gap: 10px; }
+            .team-logo { width: 60px; height: 60px; }
+            .game-details { gap: 20px; }
+            .standings-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header class="hero">
+        <div class="hero-content">
+            <div class="logo">KNICKS</div>
+            <div class="hero-subtitle">Game Tracker</div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div id="content">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <div>Loading game data...</div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <span>🍊🔵</span> Knicks Game Tracker • Built by Chaz for Todd <span>🍊🔵</span>
+    </footer>
+
+    <script>
+        const KNICKS_TEAM_ID = '1610612752';
+        const API_BASE = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba';
+        
+        let gameData = null;
+
+        async function fetchGameData() {
+            try {
+                const today = new Date();
+                const dateStr = today.toISOString().split('T')[0];
+                
+                const scheduleRes = await fetch(`${API_BASE}/teams/${KNICKS_TEAM_ID}/schedule?dates=${dateStr}`);
+                const scheduleData = await scheduleRes.json();
+                
+                let liveData = null;
+                
+                if (scheduleData.events && scheduleData.events.length > 0) {
+                    const event = scheduleData.events[0];
+                    const gameId = event.id;
+                    
+                    const boxscoreRes = await fetch(`${API_BASE}/scoreboard/${gameId}`);
+                    liveData = await boxscoreRes.json();
+                    liveData.event = event;
+                }
+                
+                const standingsRes = await fetch(`${API_BASE}/teams/${KNICKS_TEAM_ID}/standings`);
+                const standingsData = await standingsRes.json();
+                
+                return { live: liveData, standings: standingsData };
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                return null;
+            }
+        }
+
+        async function fetchRecentGames() {
+            try {
+                const now = new Date();
+                const startDate = new Date(now);
+                startDate.setDate(startDate.getDate() - 30);
+                
+                const startStr = startDate.toISOString().split('T')[0];
+                const endStr = now.toISOString().split('T')[0];
+                
+                const res = await fetch(`${API_BASE}/teams/${KNICKS_TEAM_ID}/schedule?dates=${startStr}-${endStr}&limit=10`);
+                const data = await res.json();
+                
+                return data.events || [];
+            } catch (error) {
+                console.error('Error fetching recent games:', error);
+                return [];
+            }
+        }
+
+        function getTeamLogo(team, size = 80) {
+            const colors = {
+                '1610612752': { primary: '#F58426', secondary: '#006BB6', name: 'Knicks' },
+                '1610612738': { primary: '#C8102E', secondary: '#003DA5', name: 'Celtics' },
+                '1610612751': { primary: '#E31837', secondary: '#000000', name: 'Nets' },
+                '1610612755': { primary: '#6F263D', secondary: '#000000', name: '76ers' },
+                '1610612760': { primary: '#007A33', secondary: '#000000', name: 'Hornets' },
+                '1610612741': { primary: '#CE1141', secondary: '#000000', name: 'Bulls' },
+                '1610612739': { primary: '#6F263D', secondary: '#000000', name: 'Cavaliers' },
+                '1610612732': { primary: '#860038', secondary: '#041E42', name: 'Pistons' },
+                '1610612745': { primary: '#002D62', secondary: '#FDBB30', name: 'Rockets' },
+                '1610610547': { primary: '#1D1D1D', secondary: '#CDCBA7', name: 'Lakers' },
+                '1610612748': { primary: '#5A2D82', secondary: '#041E42', name: 'Heat' },
+                '1610612750': { primary: '#00471B', secondary: '#EEE1C6', name: 'Bucks' },
+                '1610612765': { primary: '#0C2340', secondary: '#C4CED4', name: 'Pelicans' },
+                '1610612756': { primary: '#002B5C', secondary: '#E31837', name: 'Suns' },
+                '1610612758': { primary: '#1D1160', secondary: '#E31837', name: 'Kings' },
+                '1610612759': { primary: '#006BB6', secondary: '#F58426', name: 'Spurs' },
+                '1610612747': { primary: '#000000', secondary: '#002B5C', name: 'Thunder' },
+                '1610612749': { primary: '#00493C', secondary: '#F0163A', name: 'Pacers' },
+                '1610612753': { primary: '#002B5C', secondary: '#C4CED4', name: 'Blazers' },
+                '1610612743': { primary: '#5A2D82', secondary: '#000000', name: 'Nuggets' },
+                '1610612744': { primary: '#0C2340', secondary: '#C4CED4', name: 'Warriors' },
+                '1610612746': { primary: '#002D62', secondary: '#C4CED4', name: 'Clippers' },
+                '1610612742': { primary: '#002B5C', secondary: '#E31837', name: 'Mavericks' },
+                '1610612737': { primary: '#002D62', secondary: '#E31837', name: 'Hawks' },
+                '1610612754': { primary: '#0C5C2C', secondary: '#000000', name: 'Grizzlies' },
+                '1610612763': { primary: '#002D62', secondary: '#C4CED4', name: 'Grizzlies' },
+                '1610612766': { primary: '#002B5C', secondary: '#C60C30', name: 'Wizards' },
+                '1610612761': { primary: '#000000', secondary: '#002B5C', name: 'Raptors' },
+            };
+            
+            const info = colors[team.id] || { primary: '#888', secondary: '#888', name: team.shortDisplayName };
+            
+            return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="48" fill="${info.primary}" stroke="${info.secondary}" stroke-width="4"/>
+                <text x="50" y="58" font-family="Arial Black" font-size="28" fill="white" text-anchor="middle" font-weight="bold">${team.abbreviation}</text>
+            </svg>`;
+        }
+
+        function formatTime(period, clock) {
+            if (!clock) return `Q${period}`;
+            return `${clock} Q${period}`;
+        }
+
+        function render(data) {
+            const container = document.getElementById('content');
+            
+            if (!data || !data.live) {
+                container.innerHTML = `
+                    <div class="game-card">
+                        <div class="no-game">
+                            <div class="no-game-icon">🏀</div>
+                            <div class="no-game-title">NO GAME TONIGHT</div>
+                            <div class="no-game-sub">Check back on game day or enjoy the off-day</div>
+                        </div>
+                    </div>
+                    <div class="standings-card">
+                        <div class="section-title">SEASON RECORD</div>
+                        <div class="standings-grid" id="standings-grid"></div>
+                    </div>
+                `;
+                loadStandings();
+                return;
+            }
+
+            const game = data.live;
+            const competition = game.competitions.competition[0];
+            const knicks = competition.home_team;
+            const opponent = competition.away_team;
+            const isKnicksHome = knicks.id === KNICKS_TEAM_ID;
+            
+            const knicksTeam = isKnicksHome ? knicks : opponent;
+            const opponentTeam = isKnicksHome ? opponent : knicks;
+            const knicksScore = parseInt(isKnicksHome ? competition.home_score : competition.away_score);
+            const oppScore = parseInt(isKnicksHome ? competition.away_score : competition.home_score);
+            
+            const status = game.status;
+            const period = status.period || 0;
+            const clock = status.displayClock || '';
+            const isLive = status.state === 'in';
+            const isFinal = status.state === 'post';
+            const isPregame = status.state === 'pre';
+            
+            const knicksWin = knicksScore > oppScore;
+            
+            let winProb = 50;
+            if (isLive && period > 0) {
+                const minutesLeft = (4 - period) * 12 + (clock ? parseFloat(clock.split(':')[0]) || 0 : 0);
+                const scoreDiff = knicksScore - oppScore;
+                if (minutesLeft > 0) {
+                    winProb = Math.min(95, Math.max(5, 50 + (scoreDiff * 3) + ((12 - minutesLeft) * 2)));
+                }
+            } else if (isPregame) {
+                winProb = 50;
+            }
+
+            let gameStatusText = '';
+            if (isLive) gameStatusText = formatTime(period, clock);
+            else if (isFinal) gameStatusText = 'FINAL';
+            else if (isPregame) {
+                const time = status.startTime || '';
+                const timeStr = time ? new Date(time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'TBD';
+                gameStatusText = `${timeStr} ET`;
+            }
+
+            const probColor = winProb > 50 ? 'var(--knicks-orange)' : 'var(--text-primary)';
+            
+            container.innerHTML = `
+                <div style="text-align: center;">
+                    <div class="live-badge ${isLive ? '' : 'off-air'}">
+                        <div class="live-dot"></div>
+                        ${isLive ? 'LIVE' : isFinal ? 'FINAL' : 'UPCOMING'}
+                    </div>
+                </div>
+                
+                <div class="game-card" id="game-card">
+                    <div class="game-status">${gameStatusText}</div>
+                    <div class="teams">
+                        <div class="team">
+                            <div class="team-logo">${getTeamLogo(knicksTeam)}</div>
+                            <div class="team-name ${knicksTeam.id === KNICKS_TEAM_ID ? 'knicks' : 'opponent'}">${knicksTeam.shortDisplayName}</div>
+                            <div class="score-display ${knicksTeam.id === KNICKS_TEAM_ID ? 'knicks' : 'opponent'}">${knicksScore}</div>
+                        </div>
+                        <div class="vs">VS</div>
+                        <div class="team">
+                            <div class="team-logo">${getTeamLogo(opponentTeam)}</div>
+                            <div class="team-name ${opponentTeam.id === KNICKS_TEAM_ID ? 'knicks' : 'opponent'}">${opponentTeam.shortDisplayName}</div>
+                            <div class="score-display ${opponentTeam.id === KNICKS_TEAM_ID ? 'knicks' : 'opponent'}">${oppScore}</div>
+                        </div>
+                    </div>
+                    <div class="game-details">
+                        <div class="detail">
+                            <div class="detail-label">Period</div>
+                            <div class="detail-value">${period || '-'}</div>
+                        </div>
+                        <div class="detail">
+                            <div class="detail-label">Time</div>
+                            <div class="detail-value">${clock || '-'}</div>
+                        </div>
+                        <div class="detail">
+                            <div class="detail-label">Status</div>
+                            <div class="detail-value" style="color: ${knicksWin ? 'var(--win-green)' : 'var(--loss-red)'}">
+                                ${isFinal ? (knicksWin ? 'W' : 'L') : (isLive ? 'IN PROGRESS' : 'SCHEDULED')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                ${!isFinal && !isPregame ? `
+                <div class="win-probability">
+                    <div class="prob-label">Win Probability</div>
+                    <div class="prob-value" style="color: ${probColor}">${Math.round(winProb)}%</div>
+                    <div class="prob-bar">
+                        <div class="prob-fill" style="width: ${winProb}%"></div>
+                    </div>
+                </div>
+                ` : ''}
+                
+                <div class="standings-card">
+                    <div class="section-title">SEASON RECORD</div>
+                    <div class="standings-grid" id="standings-grid"></div>
+                </div>
+                
+                <div class="standings-card">
+                    <div class="section-title">RECENT GAMES</div>
+                    <div class="recent-games" id="recent-games">
+                        <div class="loading"><div class="loading-spinner"></div></div>
+                    </div>
+                </div>
+            `;
+
+            if (isFinal && knicksWin) {
+                setTimeout(() => {
+                    document.getElementById('game-card').classList.add('celebrate');
+                }, 300);
+            }
+
+            loadStandings();
+            loadRecentGames();
+        }
+
+        async function loadStandings() {
+            try {
+                const res = await fetch(`${API_BASE}/teams/${KNICKS_TEAM_ID}/standings`);
+                const data = await res.json();
+                
+                const grid = document.getElementById('standings-grid');
+                if (!grid) return;
+                
+                const items = data.standings?.[0]?.splits?.[0]?.stats || [];
+                
+                let wins = '0', losses = '0', conf = '0-0', division = '0-0', gb = '-';
+                
+                items.forEach(stat => {
+                    if (stat.name === 'wins') wins = stat.value;
+                    if (stat.name === 'losses') losses = stat.value;
+                    if (stat.name === 'conferenceWins') conf = `${stat.value}-${items.find(s => s.name === 'conferenceLosses')?.value || 0}`;
+                    if (stat.name === 'divisionWins') division = `${stat.value}-${items.find(s => s.name === 'divisionLosses')?.value || 0}`;
+                    if (stat.name === 'gamesBehind') gb = stat.displayName || '-';
+                });
+                
+                grid.innerHTML = `
+                    <div class="stat-box">
+                        <div class="stat-value">${wins}-${losses}</div>
+                        <div class="stat-label">Record</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">${gb}</div>
+                        <div class="stat-label">Games Behind</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">${conf}</div>
+                        <div class="stat-label">Conference</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">${division}</div>
+                        <div class="stat-label">Division</div>
+                    </div>
+                `;
+            } catch (e) {
+                console.error('Standings error:', e);
+            }
+        }
+
+        async function loadRecentGames() {
+            try {
+                const games = await fetchRecentGames();
+                const container = document.getElementById('recent-games');
+                if (!container) return;
+                
+                if (!games.length) {
+                    container.innerHTML = '<div class="no-game-sub">No recent games found</div>';
+                    return;
+                }
+                
+                const completedGames = games.filter(g => g.status?.state === 'post').slice(0, 5);
+                
+                if (!completedGames.length) {
+                    container.innerHTML = '<div class="no-game-sub">No completed games in the last 30 days</div>';
+                    return;
+                }
+                
+                container.innerHTML = completedGames.map(game => {
+                    const comp = game.competitions.competition[0];
+                    const isHome = comp.home_team.id === KNICKS_TEAM_ID;
+                    const knicksTeam = isHome ? comp.home_team : comp.away_team;
+                    const oppTeam = isHome ? comp.away_team : comp.home_team;
+                    const knicksScore = parseInt(isHome ? comp.home_score : comp.away_score);
+                    const oppScore = parseInt(isHome ? comp.away_score : comp.home_score);
+                    const isWin = knicksScore > oppScore;
+                    const date = new Date(game.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    
+                    return `
+                        <div class="recent-game ${isWin ? 'win' : 'loss'}">
+                            <div>
+                                <div class="recent-opponent">${isHome ? 'vs' : '@'} ${oppTeam.shortDisplayName}</div>
+                                <div class="recent-date">${date}</div>
+                            </div>
+                            <div class="recent-result">
+                                <div class="recent-score ${isWin ? 'win' : 'loss'}">${knicksScore} - ${oppScore}</div>
+                                <div class="recent-date" style="color: ${isWin ? 'var(--win-green)' : 'var(--loss-red)'}">${isWin ? 'W' : 'L'}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                console.error('Recent games error:', e);
+            }
+        }
+
+        async function init() {
+            const data = await fetchGameData();
+            gameData = data;
+            render(data);
+            
+            setInterval(async () => {
+                const freshData = await fetchGameData();
+                if (freshData) {
+                    gameData = freshData;
+                    render(freshData);
+                }
+            }, 60000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
